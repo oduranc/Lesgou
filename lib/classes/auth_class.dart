@@ -4,6 +4,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lesgou/widgets/common_hud.dart';
 
+import '../screens/welcome_page.dart';
+
 class AuthClass {
   void toastErrorUser() {
     Fluttertoast.showToast(
@@ -46,5 +48,10 @@ class AuthClass {
     if (context.mounted) {
       signIn(context, user);
     }
+  }
+
+  void logOut(FirebaseAuth auth, BuildContext context) {
+    auth.signOut();
+    Navigator.pushNamed(context, WelcomePage.route);
   }
 }

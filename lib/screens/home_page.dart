@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:lesgou/screens/welcome_page.dart';
+import 'package:lesgou/classes/auth_class.dart';
 import 'package:lesgou/util/constants.dart';
 
 class HomePage extends StatefulWidget {
@@ -12,6 +12,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _auth = FirebaseAuth.instance;
+  final _authService = AuthClass();
   late User loggedInUser;
   String defaultImage =
       'https://cdn-icons-png.flaticon.com/512/1077/1077114.png';
@@ -23,7 +24,7 @@ class _HomePageState extends State<HomePage> {
         loggedInUser = user;
       }
     } catch (e) {
-      print(e);
+      _authService.logOut(_auth, context);
     }
   }
 
@@ -54,8 +55,7 @@ class _HomePageState extends State<HomePage> {
         ),
         ElevatedButton(
           onPressed: () {
-            _auth.signOut();
-            Navigator.pushNamed(context, WelcomePage.route);
+            _authService.logOut(_auth, context);
           },
           child: Text('Log Out'),
         ),
