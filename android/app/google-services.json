@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1057920412078",
+    "project_id": "lesgou-826a5",
+    "storage_bucket": "lesgou-826a5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1057920412078:android:8b5cce576942a60ecf003f",
+        "android_client_info": {
+          "package_name": "com.oscarduran.lesgou"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1057920412078-0pjhtej9gfk10269v85vk9l43bmctqd9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.oscarduran.lesgou",
+            "certificate_hash": "28108d5c248909fa6a0becc6778b8daef0a274d2"
+          }
+        },
+        {
+          "client_id": "1057920412078-6l0m30elsvt3ckte5eadd5qvck4m4nu4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAc8gsv-_GmUyq9JCyjGXtw3jsV5QmBRBA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1057920412078-4haq8ua3kkqee4t09ud5563te6t3umf3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
