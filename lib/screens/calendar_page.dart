@@ -1,5 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:lesgou/util/constants.dart';
+import 'package:lesgou/widgets/custom_calendar.dart';
+import 'package:lesgou/widgets/custom_date_picker.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../util/colors.dart';
@@ -12,123 +17,109 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
+  EventDataSource? events;
+  final _auth = FirebaseAuth.instance;
+  final database = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    getDataFromFirestore().then((results) {
+      SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+        setState(() {});
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    TextEditingController startTimeController = TextEditingController();
+    TextEditingController endTimeController = TextEditingController();
+
     return Scaffold(
       body: Column(
         children: <Widget>[
           Text('Calendar', style: nameStyle.copyWith(color: Colors.black)),
-          Expanded(
-            child: SfCalendar(
-              viewHeaderStyle: ViewHeaderStyle(
-                dayTextStyle: grayDisclaimerStyle.copyWith(
-                    fontWeight: FontWeight.w700, fontSize: 15),
-                dateTextStyle: grayDisclaimerStyle.copyWith(
-                    fontWeight: FontWeight.w700, fontSize: 15),
-              ),
-              timeSlotViewSettings: const TimeSlotViewSettings(
-                allDayPanelColor: tertiary,
-                timeTextStyle: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Nunito',
-                  color: secondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              allowViewNavigation: true,
-              allowedViews: const [
-                CalendarView.day,
-                CalendarView.week,
-                CalendarView.month,
-                CalendarView.timelineDay,
-                CalendarView.timelineMonth,
-                CalendarView.timelineWeek,
-                CalendarView.schedule,
-              ],
-              selectionDecoration: BoxDecoration(
-                border: Border.all(color: primary),
-              ),
-              headerStyle: CalendarHeaderStyle(
-                textStyle: nameStyle.copyWith(color: Colors.black),
-              ),
-              headerHeight: 75,
-              todayTextStyle: nameStyle.copyWith(color: quaternary),
-              todayHighlightColor: primary,
-              showNavigationArrow: true,
-              showDatePickerButton: true,
-              allowDragAndDrop: true,
-              dragAndDropSettings: DragAndDropSettings(
-                allowNavigation: true,
-                allowScroll: true,
-                autoNavigateDelay: const Duration(seconds: 1),
-                indicatorTimeFormat: 'HH:mm a',
-                showTimeIndicator: true,
-                timeIndicatorStyle: grayDisclaimerStyle.copyWith(fontSize: 10),
-              ),
-              dataSource: EventDataSource(getAppointments()),
-              appointmentTextStyle: const TextStyle(
-                fontSize: 14,
-                fontFamily: 'Nunito',
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-              monthViewSettings: const MonthViewSettings(
-                showAgenda: true,
-                agendaStyle: AgendaStyle(
-                  appointmentTextStyle: TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'Nunito',
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  dayTextStyle: TextStyle(
-                    color: Colors.black,
-                    fontFamily: 'Nunito',
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic,
-                  ),
-                  dateTextStyle: TextStyle(
-                    color: Colors.black,
-                    fontFamily: 'Nunito',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          Expanded(child: CustomCalendar(events: events)),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (_) {
+              return AlertDialog(
+                titleTextStyle: nameStyle.copyWith(color: Colors.black),
+                scrollable: true,
+                title: const Text('Add appointment'),
+                content: Form(
+                  child: Column(
+                    children: <Widget>[
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Subject',
+                        ),
+                        keyboardType: TextInputType.name,
+                      ),
+                      CustomDatePicker(
+                          text: 'Start Time', controller: startTimeController),
+                      CustomDatePicker(
+                          text: 'End Time', controller: endTimeController),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        backgroundColor: primary,
+        foregroundColor: quaternary,
+        child: const Icon(Icons.add),
       ),
     );
   }
-}
 
-List<Appointment> getAppointments() {
-  List<Appointment> events = <Appointment>[];
-  final DateTime today = DateTime.now();
-  final DateTime startTime =
-      DateTime(today.year, today.month, today.day, 9, 0, 0);
-  final DateTime endTime = startTime.add(const Duration(hours: 2));
+  Future<void> getDataFromFirestore() async {
+    var snapshotsValue = await database
+        .collection("Users")
+        .doc(_auth.currentUser!.email)
+        .collection('Appointments')
+        .get();
 
-  events.add(Appointment(
-    startTime: startTime,
-    endTime: endTime,
-    subject: 'Conference',
-    color: Colors.green,
-  ));
+    List<Appointment> list = snapshotsValue.docs
+        .map((e) => Appointment(
+              subject: e.data()['Subject'],
+              startTime: e.data()['StartTime'].toDate(),
+              endTime: e.data()['EndTime'].toDate(),
+              color: Color(e.data()['Color']),
+              isAllDay: e.data()['IsAllDay'],
+              notes: e.data()['Notes'],
+              location: e.data()['Location'],
+              recurrenceRule: e.data()['RecurrenceRule'],
+            ))
+        .toList();
+    setState(() {
+      events = EventDataSource(list);
+    });
+  }
 
-  events.add(Appointment(
-    startTime: startTime.add(const Duration(hours: 1)),
-    endTime: endTime,
-    location: 'Here',
-    notes: 'Notas',
-    subject: 'Conference',
-    color: Colors.blue,
-    recurrenceRule: 'FREQ=DAILY;COUNT=10',
-    isAllDay: true,
-  ));
-
-  return events;
+  void addAppointment() {
+    database
+        .collection("Users")
+        .doc(_auth.currentUser!.email)
+        .collection('Appointments')
+        .doc()
+        .set({
+      'Subject': 'Math class',
+      'StartTime': DateTime.now(),
+      'EndTime': DateTime.now().add(const Duration(hours: 2)),
+      'Color': Colors.blue.value,
+      'IsAllDay': false,
+      'Notes': 'GC205',
+      'Location': 'INTEC',
+      'RecurrenceRule': null,
+    });
+  }
 }
 
 class EventDataSource extends CalendarDataSource {
