@@ -5,10 +5,12 @@ import '../util/colors.dart';
 import '../util/constants.dart';
 
 class CustomDatePicker extends StatelessWidget {
-  CustomDatePicker({Key? key, required this.controller, required this.text})
+  CustomDatePicker(
+      {Key? key, required this.controller, required this.text, this.validator})
       : super(key: key);
   final TextEditingController controller;
   final String text;
+  final String? Function(String?)? validator;
   DateTime? selectedDate;
 
   @override
@@ -17,6 +19,7 @@ class CustomDatePicker extends StatelessWidget {
       decoration: InputDecoration(
         labelText: text,
       ),
+      validator: validator,
       controller: controller,
       onTap: () {
         FocusScope.of(context).requestFocus(FocusNode());

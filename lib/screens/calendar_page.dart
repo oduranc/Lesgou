@@ -2,12 +2,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lesgou/util/constants.dart';
 import 'package:lesgou/widgets/custom_calendar.dart';
+import 'package:lesgou/widgets/custom_check_box.dart';
 import 'package:lesgou/widgets/custom_date_picker.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
+import '../classes/event_data_source.dart';
 import '../util/colors.dart';
+import '../widgets/custom_color_picker.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({Key? key}) : super(key: key);
@@ -21,20 +25,23 @@ class _CalendarPageState extends State<CalendarPage> {
   final _auth = FirebaseAuth.instance;
   final database = FirebaseFirestore.instance;
 
+  TextEditingController startTimeController = TextEditingController();
+  TextEditingController endTimeController = TextEditingController();
+  TextEditingController colorController = TextEditingController();
+  TextEditingController subjectController = TextEditingController();
+  TextEditingController notesController = TextEditingController();
+  TextEditingController locationController = TextEditingController();
+  TextEditingController isAllDayController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    getDataFromFirestore().then((results) {
-      SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {});
-      });
-    });
+    getData();
   }
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController startTimeController = TextEditingController();
-    TextEditingController endTimeController = TextEditingController();
+    final _formKey = GlobalKey<FormState>();
 
     return Scaffold(
       body: Column(
@@ -45,38 +52,120 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          showDialog(
-            context: context,
-            builder: (_) {
-              return AlertDialog(
-                titleTextStyle: nameStyle.copyWith(color: Colors.black),
-                scrollable: true,
-                title: const Text('Add appointment'),
-                content: Form(
-                  child: Column(
-                    children: <Widget>[
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          labelText: 'Subject',
-                        ),
-                        keyboardType: TextInputType.name,
-                      ),
-                      CustomDatePicker(
-                          text: 'Start Time', controller: startTimeController),
-                      CustomDatePicker(
-                          text: 'End Time', controller: endTimeController),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
+          cleanAddForm();
+          showAddForm(context, _formKey);
         },
         backgroundColor: primary,
         foregroundColor: quaternary,
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  void showAddForm(BuildContext context, GlobalKey<FormState> _formKey) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          backgroundColor: quaternary,
+          titleTextStyle: nameStyle.copyWith(color: Colors.black),
+          scrollable: true,
+          title: const Text('Add appointment'),
+          content: Form(
+            key: _formKey,
+            child: Column(
+              children: <Widget>[
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Subject',
+                  ),
+                  controller: subjectController,
+                  keyboardType: TextInputType.name,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    return null;
+                  },
+                ),
+                CustomCheckBox(
+                  text: 'Is all day?',
+                  controller: isAllDayController,
+                ),
+                CustomDatePicker(
+                  text: 'Start Time',
+                  controller: startTimeController,
+                  validator: (value) {
+                    if (startTimeController.text.isEmpty) {
+                      return 'Set a start time';
+                    }
+                    return null;
+                  },
+                ),
+                CustomDatePicker(
+                  text: 'End Time',
+                  controller: endTimeController,
+                  validator: (value) {
+                    if (startTimeController.text.isEmpty) {
+                      return 'Set a start time first';
+                    }
+                    if (endTimeController.text.isEmpty) {
+                      return 'Set an end time';
+                    }
+                    if (DateTime.parse(value.toString()).compareTo(
+                            DateTime.parse(startTimeController.text)) <
+                        0) {
+                      return 'End Time must be later than start time';
+                    }
+                    return null;
+                  },
+                ),
+                CustomColorPicker(
+                  text: 'Color',
+                  controller: colorController,
+                ),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Notes',
+                  ),
+                  controller: notesController,
+                  minLines: 1,
+                  maxLines: 3,
+                  keyboardType: TextInputType.multiline,
+                ),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Location',
+                  ),
+                  controller: locationController,
+                  minLines: 1,
+                  maxLines: 3,
+                  keyboardType: TextInputType.multiline,
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
+                  addAppointment();
+                }
+              },
+              child: const Text('ADD'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void getData() {
+    getDataFromFirestore().then((results) {
+      SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+        setState(() {});
+      });
+    });
   }
 
   Future<void> getDataFromFirestore() async {
@@ -91,7 +180,7 @@ class _CalendarPageState extends State<CalendarPage> {
               subject: e.data()['Subject'],
               startTime: e.data()['StartTime'].toDate(),
               endTime: e.data()['EndTime'].toDate(),
-              color: Color(e.data()['Color']),
+              color: Color(e.data()['Color']).withOpacity(1),
               isAllDay: e.data()['IsAllDay'],
               notes: e.data()['Notes'],
               location: e.data()['Location'],
@@ -103,27 +192,45 @@ class _CalendarPageState extends State<CalendarPage> {
     });
   }
 
-  void addAppointment() {
-    database
-        .collection("Users")
-        .doc(_auth.currentUser!.email)
-        .collection('Appointments')
-        .doc()
-        .set({
-      'Subject': 'Math class',
-      'StartTime': DateTime.now(),
-      'EndTime': DateTime.now().add(const Duration(hours: 2)),
-      'Color': Colors.blue.value,
-      'IsAllDay': false,
-      'Notes': 'GC205',
-      'Location': 'INTEC',
-      'RecurrenceRule': null,
-    });
+  void cleanAddForm() {
+    startTimeController.clear();
+    endTimeController.clear();
+    colorController.clear();
+    subjectController.clear();
+    notesController.clear();
+    locationController.clear();
+    isAllDayController.clear();
   }
-}
 
-class EventDataSource extends CalendarDataSource {
-  EventDataSource(List<Appointment> source) {
-    appointments = source;
+  void addAppointment() {
+    try {
+      database
+          .collection("Users")
+          .doc(_auth.currentUser!.email)
+          .collection('Appointments')
+          .doc()
+          .set({
+        'Subject': subjectController.text,
+        'StartTime': DateTime.parse(startTimeController.text),
+        'EndTime': DateTime.parse(endTimeController.text),
+        'Color': int.parse(colorController.text),
+        'IsAllDay': int.parse(isAllDayController.text) == 1 ? true : false,
+        'Notes': notesController.text,
+        'Location': locationController.text,
+        'RecurrenceRule': null,
+      });
+      Navigator.pop(context);
+      getData();
+    } on FirebaseException catch (e) {
+      Fluttertoast.showToast(
+        msg: e.message.toString(),
+        toastLength: Toast.LENGTH_LONG,
+      );
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'Error on loading data. Try again later.',
+        toastLength: Toast.LENGTH_LONG,
+      );
+    }
   }
 }
