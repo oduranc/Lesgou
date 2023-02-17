@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../classes/event_data_source.dart';
 import '../widgets/custom_check_box.dart';
@@ -159,6 +161,7 @@ class _AddFormState extends State<AddForm> {
         'RecurrenceRule': null,
       });
       Navigator.pop(context);
+      getData();
     } on FirebaseException catch (e) {
       Fluttertoast.showToast(
         msg: e.message.toString(),
@@ -170,5 +173,37 @@ class _AddFormState extends State<AddForm> {
         toastLength: Toast.LENGTH_LONG,
       );
     }
+  }
+
+  void getData() {
+    getDataFromFirestore().then((results) {
+      SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+        setState(() {});
+      });
+    });
+  }
+
+  Future<void> getDataFromFirestore() async {
+    var snapshotsValue = await widget.database
+        .collection("Users")
+        .doc(widget.auth.currentUser!.email)
+        .collection('Appointments')
+        .get();
+
+    List<Appointment> list = snapshotsValue.docs
+        .map((e) => Appointment(
+              subject: e.data()['Subject'],
+              startTime: e.data()['StartTime'].toDate(),
+              endTime: e.data()['EndTime'].toDate(),
+              color: Color(e.data()['Color']).withOpacity(1),
+              isAllDay: e.data()['IsAllDay'],
+              notes: e.data()['Notes'],
+              location: e.data()['Location'],
+              recurrenceRule: e.data()['RecurrenceRule'],
+            ))
+        .toList();
+    setState(() {
+      events = EventDataSource(list);
+    });
   }
 }
