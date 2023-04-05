@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:lesgou/util/colors.dart';
+import 'package:lesgou/util/constants.dart';
 
 import '../classes/event_data_source.dart';
 import '../widgets/custom_check_box.dart';
@@ -12,25 +12,11 @@ import '../widgets/custom_date_picker.dart';
 
 class AddForm extends StatefulWidget {
   const AddForm(
-      {required this.subjectController,
-      required this.isAllDayController,
-      required this.startTimeController,
-      required this.endTimeController,
-      required this.notesController,
-      required this.locationController,
-      required this.colorController,
-      required this.database,
-      required this.auth});
+      {required this.database, required this.auth, required this.onDispose});
 
-  final TextEditingController subjectController,
-      isAllDayController,
-      startTimeController,
-      endTimeController,
-      colorController,
-      notesController,
-      locationController;
   final FirebaseFirestore database;
   final FirebaseAuth auth;
+  final VoidCallback onDispose;
 
   @override
   State<AddForm> createState() => _AddFormState();
@@ -40,11 +26,13 @@ class _AddFormState extends State<AddForm> {
   final _formKey = GlobalKey<FormState>();
   late EventDataSource? events;
 
-  @override
-  void initState() {
-    cleanAddForm();
-    super.initState();
-  }
+  TextEditingController startTimeController = TextEditingController();
+  TextEditingController endTimeController = TextEditingController();
+  TextEditingController colorController = TextEditingController();
+  TextEditingController subjectController = TextEditingController();
+  TextEditingController notesController = TextEditingController();
+  TextEditingController locationController = TextEditingController();
+  TextEditingController isAllDayController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +44,7 @@ class _AddFormState extends State<AddForm> {
             decoration: const InputDecoration(
               labelText: 'Subject',
             ),
-            controller: widget.subjectController,
+            controller: subjectController,
             keyboardType: TextInputType.name,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -67,13 +55,13 @@ class _AddFormState extends State<AddForm> {
           ),
           CustomCheckBox(
             text: 'Is all day?',
-            controller: widget.isAllDayController,
+            controller: isAllDayController,
           ),
           CustomDatePicker(
             text: 'Start Time',
-            controller: widget.startTimeController,
+            controller: startTimeController,
             validator: (value) {
-              if (widget.startTimeController.text.isEmpty) {
+              if (startTimeController.text.isEmpty) {
                 return 'Set a start time';
               }
               return null;
@@ -81,16 +69,16 @@ class _AddFormState extends State<AddForm> {
           ),
           CustomDatePicker(
             text: 'End Time',
-            controller: widget.endTimeController,
+            controller: endTimeController,
             validator: (value) {
-              if (widget.startTimeController.text.isEmpty) {
+              if (startTimeController.text.isEmpty) {
                 return 'Set a start time first';
               }
-              if (widget.endTimeController.text.isEmpty) {
+              if (endTimeController.text.isEmpty) {
                 return 'Set an end time';
               }
-              if (DateTime.parse(value.toString()).compareTo(
-                      DateTime.parse(widget.startTimeController.text)) <
+              if (DateTime.parse(value.toString())
+                      .compareTo(DateTime.parse(startTimeController.text)) <
                   0) {
                 return 'End Time must be later than start time';
               }
@@ -99,13 +87,13 @@ class _AddFormState extends State<AddForm> {
           ),
           CustomColorPicker(
             text: 'Color',
-            controller: widget.colorController,
+            controller: colorController,
           ),
           TextFormField(
             decoration: const InputDecoration(
               labelText: 'Notes',
             ),
-            controller: widget.notesController,
+            controller: notesController,
             minLines: 1,
             maxLines: 3,
             keyboardType: TextInputType.multiline,
@@ -114,7 +102,7 @@ class _AddFormState extends State<AddForm> {
             decoration: const InputDecoration(
               labelText: 'Location',
             ),
-            controller: widget.locationController,
+            controller: locationController,
             minLines: 1,
             maxLines: 3,
             keyboardType: TextInputType.multiline,
@@ -123,45 +111,34 @@ class _AddFormState extends State<AddForm> {
             onPressed: () {
               if (_formKey.currentState!.validate()) {
                 addAppointment();
+                widget.onDispose();
               }
             },
-            child: const Text('ADD'),
+            child: Text('ADD', style: textButtonStyle.copyWith(color: primary)),
           )
         ],
       ),
     );
   }
 
-  void cleanAddForm() {
-    widget.startTimeController.clear();
-    widget.endTimeController.clear();
-    widget.colorController.clear();
-    widget.subjectController.clear();
-    widget.notesController.clear();
-    widget.locationController.clear();
-    widget.isAllDayController.clear();
-  }
-
   void addAppointment() {
     try {
       widget.database
-          .collection("Users")
+          .collection('Users')
           .doc(widget.auth.currentUser!.email)
           .collection('Appointments')
           .doc()
           .set({
-        'Subject': widget.subjectController.text,
-        'StartTime': DateTime.parse(widget.startTimeController.text),
-        'EndTime': DateTime.parse(widget.endTimeController.text),
-        'Color': int.parse(widget.colorController.text),
-        'IsAllDay':
-            int.parse(widget.isAllDayController.text) == 1 ? true : false,
-        'Notes': widget.notesController.text,
-        'Location': widget.locationController.text,
+        'Subject': subjectController.text,
+        'StartTime': DateTime.parse(startTimeController.text),
+        'EndTime': DateTime.parse(endTimeController.text),
+        'Color': int.parse(colorController.text),
+        'IsAllDay': int.parse(isAllDayController.text) == 1 ? true : false,
+        'Notes': notesController.text,
+        'Location': locationController.text,
         'RecurrenceRule': null,
       });
       Navigator.pop(context);
-      getData();
     } on FirebaseException catch (e) {
       Fluttertoast.showToast(
         msg: e.message.toString(),
@@ -173,37 +150,5 @@ class _AddFormState extends State<AddForm> {
         toastLength: Toast.LENGTH_LONG,
       );
     }
-  }
-
-  void getData() {
-    getDataFromFirestore().then((results) {
-      SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {});
-      });
-    });
-  }
-
-  Future<void> getDataFromFirestore() async {
-    var snapshotsValue = await widget.database
-        .collection("Users")
-        .doc(widget.auth.currentUser!.email)
-        .collection('Appointments')
-        .get();
-
-    List<Appointment> list = snapshotsValue.docs
-        .map((e) => Appointment(
-              subject: e.data()['Subject'],
-              startTime: e.data()['StartTime'].toDate(),
-              endTime: e.data()['EndTime'].toDate(),
-              color: Color(e.data()['Color']).withOpacity(1),
-              isAllDay: e.data()['IsAllDay'],
-              notes: e.data()['Notes'],
-              location: e.data()['Location'],
-              recurrenceRule: e.data()['RecurrenceRule'],
-            ))
-        .toList();
-    setState(() {
-      events = EventDataSource(list);
-    });
   }
 }

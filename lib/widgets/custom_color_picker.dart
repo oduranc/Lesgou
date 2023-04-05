@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:lesgou/util/constants.dart';
+
+import '../util/colors.dart';
 
 class CustomColorPicker extends StatefulWidget {
   CustomColorPicker({Key? key, required this.text, required this.controller})
@@ -40,7 +43,19 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
           context: context,
           builder: (_) {
             return AlertDialog(
-              title: const Text('Pick a color!'),
+              title: Text(
+                'Pick a color!',
+                style: nameStyle.copyWith(color: Colors.black),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'DONE',
+                    style: textButtonStyle.copyWith(color: primary),
+                  ),
+                )
+              ],
               content: SingleChildScrollView(
                 child: ColorPicker(
                   pickerColor: selectedColor,
