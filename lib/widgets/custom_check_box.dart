@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
 class CustomCheckBox extends StatefulWidget {
-  CustomCheckBox({Key? key, required this.text, required this.controller})
+  CustomCheckBox(
+      {Key? key,
+      required this.text,
+      required this.controller,
+      required this.validator})
       : super(key: key);
   final String text;
   final TextEditingController controller;
+  final String? Function(String?)? validator;
 
   @override
   State<CustomCheckBox> createState() => _CustomCheckBoxState();
@@ -34,6 +39,7 @@ class _CustomCheckBoxState extends State<CustomCheckBox> {
           onChanged: changeValue,
         ),
       ),
+      validator: widget.validator,
       readOnly: true,
       onTap: () {
         FocusScope.of(context).requestFocus(FocusNode());

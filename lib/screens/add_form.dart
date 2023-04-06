@@ -56,6 +56,15 @@ class _AddFormState extends State<AddForm> {
           CustomCheckBox(
             text: 'Is all day?',
             controller: isAllDayController,
+            validator: (value) {
+              if (int.parse(isAllDayController.text) == 1) {
+                startTimeController.text = startTimeController.text
+                    .replaceFirst(RegExp(r'\d\d:\d\d:00\.000'), '00:00:00.000');
+                endTimeController.text = endTimeController.text
+                    .replaceFirst(RegExp(r'\d\d:\d\d:00\.000'), '23:59:00.000');
+              }
+              return null;
+            },
           ),
           CustomDatePicker(
             text: 'Start Time',
@@ -123,12 +132,14 @@ class _AddFormState extends State<AddForm> {
 
   void addAppointment() {
     try {
+      String key = UniqueKey().toString();
       widget.database
           .collection('Users')
           .doc(widget.auth.currentUser!.email)
           .collection('Appointments')
-          .doc()
+          .doc(key)
           .set({
+        'Key': key,
         'Subject': subjectController.text,
         'StartTime': DateTime.parse(startTimeController.text),
         'EndTime': DateTime.parse(endTimeController.text),
@@ -137,6 +148,7 @@ class _AddFormState extends State<AddForm> {
         'Notes': notesController.text,
         'Location': locationController.text,
         'RecurrenceRule': null,
+        'Done': false,
       });
       Navigator.pop(context);
     } on FirebaseException catch (e) {

@@ -24,7 +24,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
 
   @override
   void initState() {
-    changeColor(Colors.blue);
+    changeColor(primary);
     super.initState();
   }
 

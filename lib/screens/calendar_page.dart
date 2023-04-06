@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:lesgou/classes/custom_appointment.dart';
 import 'package:lesgou/screens/add_form.dart';
 import 'package:lesgou/util/constants.dart';
 import 'package:lesgou/widgets/custom_calendar.dart';
-import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../classes/event_data_source.dart';
 import '../util/colors.dart';
@@ -82,8 +82,9 @@ class _CalendarPageState extends State<CalendarPage> {
         .collection('Appointments')
         .get();
 
-    List<Appointment> list = snapshotsValue.docs
-        .map((e) => Appointment(
+    List<CustomAppointment> list = snapshotsValue.docs
+        .map((e) => CustomAppointment(
+              id: e.data()['Key'],
               subject: e.data()['Subject'],
               startTime: e.data()['StartTime'].toDate(),
               endTime: e.data()['EndTime'].toDate(),
@@ -92,6 +93,7 @@ class _CalendarPageState extends State<CalendarPage> {
               notes: e.data()['Notes'],
               location: e.data()['Location'],
               recurrenceRule: e.data()['RecurrenceRule'],
+              done: e.data()['Done'],
             ))
         .toList();
     setState(() {

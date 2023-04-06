@@ -29,12 +29,12 @@ class CustomCalendar extends StatelessWidget {
       ),
       allowViewNavigation: true,
       allowedViews: const [
-        CalendarView.day,
-        CalendarView.week,
         CalendarView.month,
-        CalendarView.timelineDay,
+        CalendarView.week,
+        CalendarView.day,
         CalendarView.timelineMonth,
         CalendarView.timelineWeek,
+        CalendarView.timelineDay,
         CalendarView.schedule,
       ],
       selectionDecoration: BoxDecoration(
@@ -48,6 +48,7 @@ class CustomCalendar extends StatelessWidget {
       todayHighlightColor: primary,
       showNavigationArrow: true,
       showDatePickerButton: true,
+      view: CalendarView.month,
       allowDragAndDrop: true,
       dragAndDropSettings: DragAndDropSettings(
         allowNavigation: true,

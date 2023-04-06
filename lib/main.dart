@@ -19,10 +19,20 @@ class Lesgou extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
+        textSelectionTheme: const TextSelectionThemeData(cursorColor: primary),
         brightness: Brightness.light,
         primaryColor: primary,
         fontFamily: 'Nunito',
         scaffoldBackgroundColor: quaternary,
+        inputDecorationTheme: const InputDecorationTheme(
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              style: BorderStyle.solid,
+              color: primary,
+            ),
+          ),
+          floatingLabelStyle: TextStyle(color: primary),
+        ),
       ),
       title: 'Lesgou',
       home: FutureBuilder(
