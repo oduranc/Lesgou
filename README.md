@@ -1,16 +1,15 @@
-# lesgou
+# Lesgou
 
-To do app.
+Time Managemente App
 
-## Getting Started
+## Screenshots
 
-This project is a starting point for a Flutter application.
+<img src="./screenshots/welcome.png" align="left" width="200" hspace="10" style="max-width: 100%;">
 
-A few resources to get you started if this is your first Flutter project:
+<img src="./screenshots/login.png" align="center" width="200" hspace="10" style="max-width: 100%;">\\
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+<img src="./screenshots/home.png" align="left" width="200" hspace="10" style="max-width: 100%;">
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<img src="./screenshots/add.png" align="center" width="200" hspace="10" style="max-width: 100%;">\\
+
+<img src="./screenshots/calendar.png" align="left" width="200" hspace="10" style="max-width: 100%;">
